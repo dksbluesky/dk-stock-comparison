@@ -1,17 +1,16 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as np
 
 # --- 1. App Config ---
 st.set_page_config(page_title="Universal Stock Gladiator", page_icon="⚔️")
 st.title("⚔️ Universal Stock Gladiator")
 st.markdown("### The King (2330) vs. The World")
-st.info("💡 **Tip:** For OTC stocks (like Gudeng), type `.TWO` (e.g., `3680.TWO`). For Listed stocks, type `.TW`.")
+st.info("💡 **Tip:** OTC stocks (like Gudeng) need `.TWO`. Listed stocks need `.TW`.")
 
-# --- 2. Sidebar: The Control Center ---
+# --- 2. Sidebar ---
 st.sidebar.header("⚙️ Match Settings")
-
-# Date & Capital
 start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2025-10-01"))
 end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("today"))
 capital = st.sidebar.number_input("Capital (NTD)", value=400000, step=10000)
@@ -19,85 +18,82 @@ capital = st.sidebar.number_input("Capital (NTD)", value=400000, step=10000)
 st.sidebar.markdown("---")
 st.sidebar.header("🥊 The Fighters")
 
-# --- DYNAMIC INPUTS ---
-# We create a dictionary to store your fighters
 fighters = {}
 
-# 1. The King (Fixed but Premium is adjustable)
+# The King
 st.sidebar.markdown("### 👑 The King")
 ticker_king = "2330.TW"
 prem_king = st.sidebar.number_input(f"Premium for 2330", value=5.0, step=0.5)
 fighters[ticker_king] = prem_king
 
-# 2. The Challengers (User Editable!)
+# The Challengers
 st.sidebar.markdown("### ⚔️ The Challengers")
+c1_ticker = st.sidebar.text_input("Challenger 1", value="3680.TWO")
+fighters[c1_ticker] = st.sidebar.number_input(f"Prem for {c1_ticker}", value=0.0)
 
-# Challenger 1
-c1_ticker = st.sidebar.text_input("Challenger 1 Ticker", value="3680.TWO")
-c1_prem = st.sidebar.number_input(f"Premium for {c1_ticker}", value=0.0, step=0.1)
-fighters[c1_ticker] = c1_prem
+c2_ticker = st.sidebar.text_input("Challenger 2", value="2317.TW")
+fighters[c2_ticker] = st.sidebar.number_input(f"Prem for {c2_ticker}", value=0.5)
 
-# Challenger 2
-c2_ticker = st.sidebar.text_input("Challenger 2 Ticker", value="2317.TW")
-c2_prem = st.sidebar.number_input(f"Premium for {c2_ticker}", value=0.5, step=0.1)
-fighters[c2_ticker] = c2_prem
-
-# Challenger 3
-c3_ticker = st.sidebar.text_input("Challenger 3 Ticker", value="0050.TW")
-c3_prem = st.sidebar.number_input(f"Premium for {c3_ticker}", value=0.0, step=0.1)
-fighters[c3_ticker] = c3_prem
+c3_ticker = st.sidebar.text_input("Challenger 3", value="0050.TW")
+fighters[c3_ticker] = st.sidebar.number_input(f"Prem for {c3_ticker}", value=0.0)
 
 # --- 3. Run Logic ---
 if st.button("🚀 Run Simulation"):
     
-    with st.spinner(f"Downloading data for {list(fighters.keys())}..."):
+    # Remove empty inputs if user cleared a box
+    valid_fighters = {k: v for k, v in fighters.items() if k.strip() != ""}
+    
+    with st.spinner(f"Downloading data..."):
         try:
-            # Download all tickers at once
-            ticker_list = list(fighters.keys())
+            ticker_list = list(valid_fighters.keys())
             data = yf.download(ticker_list, start=start_date, end=end_date, progress=False)["Close"]
             
-            # Safe Cleaning (Fill gaps)
+            # Safe Cleaning
             data = data.ffill().bfill()
             
-            if len(data) == 0:
-                st.error("❌ No data found! Check your tickers (did you forget .TW or .TWO?)")
-                st.stop()
-
+            # --- LOOP THROUGH FIGHTERS ---
+            best_return = -999
+            best_ticker = "None"
+            
             st.success("Simulation Complete!")
             st.markdown("---")
-
-            # --- CALCULATE & DISPLAY LOOP ---
-            # This loop handles ANY stock you type. No more hardcoding!
             
-            best_return = -999
-            best_ticker = ""
+            # Create grid
+            cols = st.columns(2) + st.columns(2)
             
-            # Create columns dynamically (2 rows of 2)
-            cols = st.columns(2) + st.columns(2) 
-            
-            for i, (ticker, premium) in enumerate(fighters.items()):
-                # Handle error if a specific ticker is missing from download
-                if ticker not in data.columns:
-                    st.warning(f"⚠️ Could not find data for {ticker}. Skipping.")
-                    continue
-                
-                # Math
-                p_start = data[ticker].iloc[0]
-                p_end   = data[ticker].iloc[-1]
-                
-                # Buy logic (Capital / (Price + Premium))
-                entry_price = p_start + premium
-                shares = capital / entry_price
-                final_val = shares * p_end
-                ret_pct = ((final_val - capital) / capital) * 100
-                
-                # Track Winner
-                if ret_pct > best_return:
-                    best_return = ret_pct
-                    best_ticker = ticker
-                
-                # Display in the grid
+            for i, (ticker, premium) in enumerate(valid_fighters.items()):
                 with cols[i]:
+                    # SAFETY CHECK 1: Did we get the column?
+                    if ticker not in data.columns:
+                        st.error(f"❌ {ticker}: No Data found.")
+                        continue
+                    
+                    # SAFETY CHECK 2: Is the data actually numbers?
+                    series = data[ticker]
+                    if series.isnull().all():
+                        st.error(f"❌ {ticker}: Data is empty (NaN).")
+                        continue
+                        
+                    # Math
+                    p_start = series.iloc[0]
+                    p_end   = series.iloc[-1]
+                    
+                    # SAFETY CHECK 3: Avoid division by zero or NaN math
+                    if pd.isna(p_start) or pd.isna(p_end) or p_start == 0:
+                        st.warning(f"⚠️ {ticker}: Price data invalid.")
+                        continue
+                        
+                    entry_price = p_start + premium
+                    shares = capital / entry_price
+                    final_val = shares * p_end
+                    ret_pct = ((final_val - capital) / capital) * 100
+                    
+                    # Track Winner
+                    if ret_pct > best_return:
+                        best_return = ret_pct
+                        best_ticker = ticker
+                    
+                    # Display
                     st.metric(
                         label=f"{ticker} (Prem: ${premium})", 
                         value=f"${int(final_val):,}", 
@@ -106,21 +102,22 @@ if st.button("🚀 Run Simulation"):
 
             # --- VERDICT ---
             st.markdown("---")
-            if best_ticker == ticker_king:
-                st.balloons()
-                st.success(f"🏆 **WINNER: The King ({best_ticker})**")
-                st.write(f"TSMC is still the best place for your money, even with a ${prem_king} premium!")
-            else:
-                st.balloons()
-                st.success(f"🏆 **WINNER: {best_ticker}**")
-                st.write(f"This challenger beat TSMC by **{(best_return - ((data[ticker_king].iloc[-1]/(data[ticker_king].iloc[0]+prem_king)-1)*100)):.2f}%**!")
+            if best_ticker != "None":
+                if best_ticker == ticker_king:
+                    st.balloons()
+                    st.success(f"🏆 **WINNER: The King ({best_ticker})**")
+                else:
+                    st.balloons()
+                    st.success(f"🏆 **WINNER: {best_ticker}**")
+                    st.write(f"Beat the others with **{best_return:.2f}%** return.")
 
             # --- CHART ---
             st.markdown("### 📈 Visual Race")
-            # Normalize to 100 so lines start at same point
-            normalized_data = data / data.iloc[0] * 100
-            st.line_chart(normalized_data)
+            if not data.empty:
+                # Normalize only valid columns
+                valid_cols = [c for c in valid_fighters.keys() if c in data.columns]
+                chart_data = data[valid_cols] / data[valid_cols].iloc[0] * 100
+                st.line_chart(chart_data)
 
         except Exception as e:
-            st.error(f"Something went wrong: {e}")
-            st.write("Check if you typed a valid ticker (e.g., `2330` should be `2330.TW`).")
+            st.error(f"Critical Error: {e}")
