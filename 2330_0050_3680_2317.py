@@ -27,21 +27,24 @@ if st.button("🚀 Run Simulation"):
     
     with st.spinner(f"Downloading market data from {start_date} to {end_date}..."):
         try:
-            tickers = ["3680.TW", "0050.TW", "2330.TW", "2317.TW"]
+        # CHANGE 1: Use .TWO for Gudeng (OTC Market)           
+            tickers = ["3680.TWO", "0050.TW", "2330.TW", "2317.TW"]
             data = yf.download(tickers, start=start_date, end=end_date, progress=False)["Close"]
+           # Instead of dropping rows immediately, we fill gaps forward (ffill) and backward (bfill)
+            data = data.ffill().bfill()
             
-            # Safe cleaning: Fill weekends/holidays with previous day's price
-            data = data.ffill().dropna()
-            
+           # CHANGE 3: Handle the ".TWO" column name change
+            # (Yahoo returns the column name exactly as requested)
             if len(data) == 0:
-                st.error("❌ No data found! Please try a different date range.")
+                st.error("❌ No data found! Try checking the date range.")
                 st.stop()
 
             # --- CALCULATIONS ---
             
-            # 1. 3680 (Tech ETF)
-            p_start_3680 = data["3680.TW"].iloc[0]
-            p_end_3680   = data["3680.TW"].iloc[-1]
+           # --- CALCULATIONS ---
+            # Update the variable to match the new .TWO ticker
+            p_start_3680 = data["3680.TWO"].iloc[0]
+            p_end_3680   = data["3680.TWO"].iloc[-1]
             shares_3680  = capital / p_start_3680
             final_3680   = shares_3680 * p_end_3680
             ret_3680     = ((final_3680 - capital) / capital) * 100
