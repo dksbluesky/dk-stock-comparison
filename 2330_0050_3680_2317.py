@@ -67,12 +67,15 @@ if st.button("🚀 Run Simulation"):
             final_050   = shares_050 * p_end_050
             ret_050     = ((final_050 - capital) / capital) * 100
 
+             # ... (Calculations stay the same) ...
+
             # --- DISPLAY RESULTS ---
             st.success("Simulation Complete!")
             
             # Row 1
             col1, col2 = st.columns(2)
-            col1.metric("3680 (Tech ETF)", f"${int(final_3680):,}", f"{ret_3680:.2f}%")
+            # FIX: Label changed to Gudeng Precision
+            col1.metric("3680 (Gudeng / 家登)", f"${int(final_3680):,}", f"{ret_3680:.2f}%")
             col2.metric("2317 (Hon Hai)", f"${int(final_2317):,}", f"{ret_2317:.2f}%")
             
             # Row 2
@@ -87,8 +90,9 @@ if st.button("🚀 Run Simulation"):
             
             if winner_val == final_3680:
                 st.balloons()
-                st.success("🏆 **WINNER: 3680 (Fubon Tech)**")
-                st.write("Buying the ETF was smarter than fighting for TSMC Odd Lots.")
+                # FIX: Text updated to match Gudeng
+                st.success("🏆 **WINNER: 3680 (Gudeng Precision)**")
+                st.write("The EUV Pod supplier beat the King! (High Beta on TSMC)")
             elif winner_val == final_2317:
                 st.balloons()
                 st.success("🏆 **WINNER: 2317 (Hon Hai)**")
