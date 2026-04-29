@@ -213,16 +213,11 @@ if st.button("🚀 Run Simulation"):
                 best_ret  = ret
                 best_tick = ticker
 
-            alpha_tag = ""
-            if bench_ret is not None and ticker != BENCHMARK:
-                a = ret - bench_ret
-                alpha_tag = f"  |  vs 0050: {'▲' if a >= 0 else '▼'}{abs(a):.1f}%"
-
             gain = int(final - capital)
             st.metric(
                 label=f"{ticker}  (prem {prem:.1f} NTD = {prem_pct:.2f}%)",
                 value=f"NT${int(final):,}",
-                delta=f"{gain:+,} NTD | {ret:+.2f}%{alpha_tag}",
+                delta=f"{gain:+,} NTD | {ret:+.2f}%",
             )
 
     # ── Section 2: Deep analysis table ───────────────────────────────────
