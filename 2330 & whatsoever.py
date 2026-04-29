@@ -66,13 +66,17 @@ def strip_tz(idx):
 
 
 def check_div_cuts(divs):
-    """Compare annual dividend totals year-on-year; >10% drop counts as a cut."""
+    """Compare annual dividend totals year-on-year; >10% drop counts as a cut.
+    Excludes the current calendar year — it's incomplete so always looks low."""
     if divs.empty:
         return "No dividends"
     d = divs.copy()
     d.index = strip_tz(d.index)
     annual = d.resample("YE").sum()
     annual = annual[annual > 0]
+    # Drop current year — partial year unfairly looks like a cut
+    current_year = pd.Timestamp.now().year
+    annual = annual[annual.index.year < current_year]
     if len(annual) < 2:
         return "< 2 yrs data"
     cuts = [
