@@ -238,17 +238,6 @@ if st.button("🚀 Run Simulation"):
             swing    = (hi - lo) / hi * 100
             worst_dd = max_drawdown(s3)
 
-            # Performance vs 0050 over the same 3-year window
-            if BENCHMARK in data_3y.columns and ticker != BENCHMARK:
-                ret_3y   = (float(s3.iloc[-1]) / float(s3.iloc[0]) - 1) * 100
-                bench_3y = (
-                    float(data_3y[BENCHMARK].iloc[-1]) / float(data_3y[BENCHMARK].iloc[0]) - 1
-                ) * 100
-                diff  = ret_3y - bench_3y
-                vs050 = f"{'▲' if diff >= 0 else '▼'}{abs(diff):.1f}%"
-            else:
-                vs050 = "— (is 0050)"
-
             # Dividend + 填息
             try:
                 t         = yf.Ticker(ticker)
@@ -269,7 +258,6 @@ if st.button("🚀 Run Simulation"):
                 "Dividend":       div_label,
                 "填息 (3Y)":      fill_rate,
                 "Avg 填息 Days":  fill_avg,
-                "vs 0050 (3Y)":   vs050,
             })
 
     if rows:
