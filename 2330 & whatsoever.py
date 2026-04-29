@@ -141,6 +141,13 @@ def to_df(obj, fallback_name):
     return obj.to_frame(name=fallback_name) if isinstance(obj, pd.Series) else obj
 
 
+@st.cache_data(ttl=1800)   # cache 30 min — PC and mobile get identical prices
+def download_close(tickers, start, end, auto_adjust):
+    raw = yf.download(tickers, start=start, end=end,
+                      auto_adjust=auto_adjust, progress=False)
+    return to_df(raw["Close"], tickers[0])
+
+
 # ── Run ───────────────────────────────────────────────────────────────────────
 if st.button("🚀 Run Simulation"):
     valid = {k: v for k, v in fighters.items() if k.strip()}
@@ -148,25 +155,22 @@ if st.button("🚀 Run Simulation"):
     three_yr = (pd.Timestamp.now() - pd.DateOffset(years=3)).strftime("%Y-%m-%d")
 
     # yfinance end is exclusive — add 1 day to include today's close
-    end_fetch   = end_date + timedelta(days=1)
+    end_fetch    = end_date + timedelta(days=1)
     end_fetch_3y = pd.Timestamp.now().date() + timedelta(days=1)
 
     with st.spinner("Downloading price data…"):
         try:
             data = to_df(
-                yf.download(fetch, start=start_date, end=end_fetch,
-                            auto_adjust=True, progress=False)["Close"],
+                download_close(fetch, str(start_date), str(end_fetch), True),
                 fetch[0],
             )
             data_3y = to_df(
-                yf.download(fetch, start=three_yr, end=end_fetch_3y,
-                            auto_adjust=True, progress=False)["Close"],
+                download_close(fetch, three_yr, str(end_fetch_3y), True),
                 fetch[0],
             )
             # Unadjusted prices for 填息 so the ex-div price drop is preserved
             data_raw = to_df(
-                yf.download(fetch, start=three_yr, end=end_fetch_3y,
-                            auto_adjust=False, progress=False)["Close"],
+                download_close(fetch, three_yr, str(end_fetch_3y), False),
                 fetch[0],
             )
         except Exception as e:
