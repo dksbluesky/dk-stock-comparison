@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
+from datetime import timedelta
 
 st.set_page_config(page_title="Universal Stock Gladiator", page_icon="⚔️", layout="wide")
 st.title("⚔️ Universal Stock Gladiator")
@@ -39,13 +40,19 @@ BENCHMARK = "0050.TW"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def net_return(cap, p0, p1, prem):
-    """Net return after Taiwan buy commission and sell tax."""
-    entry     = p0 + prem
-    shares    = cap / entry
-    buy_cost  = shares * entry * BUY_COMM
-    proceeds  = shares * p1
-    sell_cost = proceeds * SELL_TAX
-    net       = proceeds - buy_cost - sell_cost
+    """
+    Net return after Taiwan buy commission and sell tax.
+    Uses whole shares only — fractional shares cannot be traded.
+    Uninvested cash (remainder) is returned untouched.
+    """
+    entry      = p0 + prem
+    shares     = int(cap // entry)       # whole shares only (零股 basis)
+    used_cap   = shares * entry
+    cash_left  = cap - used_cap          # too small to buy another share
+    buy_cost   = used_cap * BUY_COMM
+    proceeds   = shares * p1
+    sell_cost  = proceeds * SELL_TAX
+    net        = proceeds - buy_cost - sell_cost + cash_left
     return net, (net - cap) / cap * 100
 
 
@@ -136,21 +143,25 @@ if st.button("🚀 Run Simulation"):
     fetch = list(set(list(valid.keys()) + [BENCHMARK]))
     three_yr = (pd.Timestamp.now() - pd.DateOffset(years=3)).strftime("%Y-%m-%d")
 
+    # yfinance end is exclusive — add 1 day to include today's close
+    end_fetch   = end_date + timedelta(days=1)
+    end_fetch_3y = pd.Timestamp.now().date() + timedelta(days=1)
+
     with st.spinner("Downloading price data…"):
         try:
             data = to_df(
-                yf.download(fetch, start=start_date, end=end_date,
+                yf.download(fetch, start=start_date, end=end_fetch,
                             auto_adjust=True, progress=False)["Close"],
                 fetch[0],
             )
             data_3y = to_df(
-                yf.download(fetch, start=three_yr, end=end_date,
+                yf.download(fetch, start=three_yr, end=end_fetch_3y,
                             auto_adjust=True, progress=False)["Close"],
                 fetch[0],
             )
             # Unadjusted prices for 填息 so the ex-div price drop is preserved
             data_raw = to_df(
-                yf.download(fetch, start=three_yr, end=end_date,
+                yf.download(fetch, start=three_yr, end=end_fetch_3y,
                             auto_adjust=False, progress=False)["Close"],
                 fetch[0],
             )
