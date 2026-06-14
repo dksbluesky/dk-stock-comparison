@@ -1,0 +1,44 @@
+* { box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+body { margin: 0; background: #0e1117; color: #e6e6e6; }
+.container { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { margin-bottom: 0; }
+h2 { margin-top: 4px; color: #aaa; font-size: 1.1rem; font-weight: normal; }
+.info { background: #1c2733; border: 1px solid #2b3b4d; border-radius: 6px; padding: 8px 12px; color: #9fd3ff; }
+code { background: #2b3b4d; padding: 2px 4px; border-radius: 4px; }
+
+.settings { background: #161b22; border: 1px solid #2a2f3a; border-radius: 8px; padding: 16px; margin-top: 16px; }
+.settings h3 { margin-top: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
+.row label { display: flex; flex-direction: column; font-size: 0.85rem; color: #aaa; gap: 4px; flex: 1; min-width: 140px; }
+input { background: #0e1117; border: 1px solid #3a3f4a; border-radius: 6px; color: #e6e6e6; padding: 8px; font-size: 0.95rem; }
+input[readonly] { color: #888; }
+
+button#runBtn { margin-top: 8px; background: #ff4b4b; color: white; border: none; border-radius: 6px; padding: 10px 24px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+button#runBtn:hover { background: #ff6b6b; }
+button#runBtn:disabled { background: #555; cursor: not-allowed; }
+
+#status { margin: 16px 0; color: #9fd3ff; }
+.error { color: #ff6b6b; }
+.warn { color: #ffcc66; }
+.success { color: #6bff8f; }
+
+hr { border: none; border-top: 1px solid #2a2f3a; margin: 24px 0; }
+.small { font-size: 0.8rem; color: #999; font-weight: normal; }
+
+.hidden { display: none; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.card { background: #161b22; border: 1px solid #2a2f3a; border-radius: 8px; padding: 16px; }
+.card .label { font-size: 0.85rem; color: #aaa; margin-bottom: 6px; }
+.card .value { font-size: 1.5rem; font-weight: 700; }
+.card .delta { font-size: 0.9rem; margin-top: 4px; }
+.card .delta.pos { color: #6bff8f; }
+.card .delta.neg { color: #ff6b6b; }
+.card.err { color: #ff6b6b; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #2a2f3a; font-size: 0.9rem; }
+th { color: #aaa; font-weight: 600; }
+
+#winner { font-size: 1.2rem; font-weight: 700; background: #16291c; border: 1px solid #2a4a33; border-radius: 8px; padding: 16px; color: #6bff8f; text-align: center; }
