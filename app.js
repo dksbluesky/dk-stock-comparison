@@ -251,10 +251,10 @@ function renderResults({ fighters, dataset, startDate, endDate }) {
       options: {
         responsive: true,
         scales: {
-          x: { ticks: { color: "#aaa", maxTicksLimit: 10 }, grid: { color: "#2a2f3a" } },
-          y: { ticks: { color: "#aaa" }, grid: { color: "#2a2f3a" } },
+          x: { ticks: { color: "#666", maxTicksLimit: 10 }, grid: { color: "#e0e3e8" } },
+          y: { ticks: { color: "#666" }, grid: { color: "#e0e3e8" } },
         },
-        plugins: { legend: { labels: { color: "#e6e6e6" } } },
+        plugins: { legend: { labels: { color: "#222222" } } },
       },
     });
   }
