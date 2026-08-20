@@ -1,0 +1,13 @@
+{
+  "name": "Universal Stock Gladiator",
+  "short_name": "Stock Compare",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#4C1D95",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "icons/stock-comparison-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/stock-comparison-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
