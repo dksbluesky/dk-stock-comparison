@@ -2,8 +2,7 @@ const BUY_COMM = 0.001425;   // 手續費
 const SELL_TAX = 0.003;      // 證交稅
 const BENCHMARK = "0050.TW";
 
-// Deploy cloudflare-worker.js, then paste its workers.dev URL here.
-const MARKET_DATA_ENDPOINT = "https://REPLACE-WITH-YOUR-WORKER.workers.dev";
+const MARKET_DATA_ENDPOINT = "https://dk-stock-data.dk0986.workers.dev";
 
 // ── Date helpers ─────────────────────────────────────────────────────────
 function ymd(d) {
