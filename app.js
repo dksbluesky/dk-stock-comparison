@@ -2,10 +2,8 @@ const BUY_COMM = 0.001425;   // 手續費
 const SELL_TAX = 0.003;      // 證交稅
 const BENCHMARK = "0050.TW";
 
-const CORS_PROXIES = [
-  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-];
+// Deploy cloudflare-worker.js, then paste its workers.dev URL here.
+const MARKET_DATA_ENDPOINT = "https://REPLACE-WITH-YOUR-WORKER.workers.dev";
 
 // ── Date helpers ─────────────────────────────────────────────────────────
 function ymd(d) {
@@ -27,24 +25,38 @@ function yearsAgo(n) {
 
 // ── Fetch ────────────────────────────────────────────────────────────────
 async function fetchYahoo(symbol, period1, period2) {
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}` +
-    `?period1=${Math.floor(period1.getTime() / 1000)}&period2=${Math.floor(period2.getTime() / 1000)}` +
+  if (MARKET_DATA_ENDPOINT.includes("REPLACE-WITH-YOUR-WORKER")) {
+    throw new Error("Market-data service is not configured");
+  }
+
+  const target = `${MARKET_DATA_ENDPOINT}?symbol=${encodeURIComponent(symbol)}` +
+    `&period1=${Math.floor(period1.getTime() / 1000)}&period2=${Math.floor(period2.getTime() / 1000)}` +
     `&interval=1d&events=div&includeAdjustedClose=true`;
 
-  let lastErr;
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const res = await fetch(proxy(target));
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const result = json?.chart?.result?.[0];
-      if (!result || !result.timestamp) throw new Error("No data");
-      return result;
-    } catch (e) {
-      lastErr = e;
-    }
+  let res;
+  try {
+    res = await fetch(target);
+  } catch (error) {
+    console.error(`Market-data network failure for ${symbol}:`, error);
+    throw new Error(`${symbol}: unable to reach market-data service`);
   }
-  throw lastErr || new Error("All proxies failed");
+
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const body = await res.json();
+      detail = body?.error ? ` (${body.error})` : "";
+    } catch (_) {
+      // Keep the visible message useful even if the upstream response is not JSON.
+    }
+    console.error(`Market-data HTTP failure for ${symbol}: ${res.status}${detail}`);
+    throw new Error(`${symbol}: market-data service returned HTTP ${res.status}${detail}`);
+  }
+
+  const json = await res.json();
+  const result = json?.chart?.result?.[0];
+  if (!result || !result.timestamp) throw new Error(`${symbol}: no price data returned`);
+  return result;
 }
 
 // ── Array helpers ────────────────────────────────────────────────────────
